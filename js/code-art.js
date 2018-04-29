@@ -38,5 +38,19 @@
         return Math.sqrt(Math.pow(point1.x - point0.x, 2) - Math.pow(point1.y - point0.y, 2));
     }
 
+    function getLineByPoints(point0, point1) {
+        return {
+            m: (point0.y - point1.y) / (point0.x - point1.x),
+            q: (point1.y*point0.x - point0.y*point1.x) / (point0.x - point1.x)
+        };
+    }
+
+    function getIntersectionPoint(line0, line1) {
+        return {
+            x: (line1.q - line0.q) / (line0.m - line1.m),
+            y: (line0.m * line1.q - line1.m * line0.q) / (line0.m - line1.m)
+        };
+    }
+
     window.CodeArt = CODE_ART;
 })();
