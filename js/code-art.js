@@ -63,9 +63,37 @@
     }
 
     function Art(canvas) {
-        this.canvas = canvas;
+        this._canvas = (function(c){
+            let domNode = null;
+            if (typeof c === 'string') {
+                domNode = document.querySelector(c) || document.getElementById(c);
+            } else if (c instanceof Element || c instanceof Node) {
+                domNode = c.tagName.toLowerCase() === 'canvas' ? c : null;
+            }
+
+            if (domNode === null) {
+                throw "Invalid element"
+            } else {
+                return domNode;
+            }
+        })(canvas);
+
+        if (this._canvas != null) {
+            let ctx = this._canvas.getContext('2d');
+            this._radius = Math.min(ctx.canvas.clientWidth, ctx.canvas.clientHeight)/2;
+            this._pointList = _getPointList(new Point(0, 0), this._radius, 10);
+            ctx.translate(
+                ctx.canvas.clientWidth/2,
+                ctx.canvas.clientHeight/2
+            );
+            ctx.save();
+        }
+
         this.draw = function(theNumber) {
             // TODO
+            let ctx = this._canvas.getContext('2d');
+            ctx.arc(0, 0, this._radius, 0, 2*Math.PI, true);
+            ctx.stroke();
         };
         this.clear = function() {
             // TODO
