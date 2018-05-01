@@ -1,18 +1,4 @@
 (function(){
-    let CODE_ART = {};
-    let canvas;
-
-    CODE_ART.init = function(theCanvas) {
-        canvas = theCanvas;
-    };
-
-    CODE_ART.draw = function(theNumber) {
-
-    };
-
-    CODE_ART.clear = function() {
-
-    };
 
     function _getPointList(centerPoint, radius, pointAmount) {
         let points = [];
@@ -76,13 +62,30 @@
         };
     }
 
-    CODE_ART.Geometry = {
-        Point: Point,
-        Line: Line,
-        getPerpendicularLineOnPoint: _getPerpendicularLineOnPoint,
-        getDistance: _getDistance,
-        getLineByPoints: _getLineByPoints,
-        getIntersectionPoint: _getIntersectionPoint
+    function Art(canvas) {
+        this.canvas = canvas;
+        this.draw = function(theNumber) {
+            // TODO
+        };
+        this.clear = function() {
+            // TODO
+        };
+    }
+
+    var CODE_ART = {
+        Art: Art,
+        Geometry: {
+            Art: Art,
+            Point: Point,
+            Line: Line,
+            getPerpendicularLineOnPoint: _getPerpendicularLineOnPoint,
+            getDistance: _getDistance,
+            getLineByPoints: _getLineByPoints,
+            getIntersectionPoint: _getIntersectionPoint
+        },
+        init: function(canvas) {
+            return new Art(canvas);
+        }
     };
 
     window.CodeArt = CODE_ART;
