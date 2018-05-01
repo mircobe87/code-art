@@ -93,6 +93,39 @@
             // TODO
             let ctx = this._canvas.getContext('2d');
             ctx.arc(0, 0, this._radius, 0, 2*Math.PI, true);
+            let lastDigit = null;
+            for (let digit of theNumber) {
+                if (/[0-9]/g.test(digit)) {
+                    if (lastDigit != null && lastDigit != digit) {
+                        let p0 = this._pointList[parseInt(lastDigit)];
+                        r0 = _getLineByPoints(
+                            new Point(0,0),
+                            p0
+                        );
+
+                        let p1 = this._pointList[parseInt(digit)];
+                        r1 = _getLineByPoints(
+                            new Point(0,0),
+                            p1
+                        );
+                        
+                        let p = _getIntersectionPoint(
+                            r0.perpendicularLineAt(p0),
+                            r1.perpendicularLineAt(p1)
+                        );
+                        let arcRadius = p.distanceTo(new Point(0,0));
+                        try {
+                            ctx.arc(p0.x, p0.y, p1.x, p1.y, arcRadius);
+                        } catch (err) {
+                            console.log(err.message, arcRadius);
+                        }
+                    } else {
+                        let firstPoint = this._pointList[parseInt(digit)];
+                        ctx.moveTo(firstPoint.x, firstPoint.y);
+                    }
+                    lastDigit = digit;
+                }
+            }
             ctx.stroke();
         };
         this.clear = function() {

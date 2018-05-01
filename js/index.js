@@ -3,5 +3,5 @@ document.addEventListener("DOMContentLoaded", function(event){
     console.log("DOMContentLoaded :: fired");
 
     let drawingArea = CodeArt.init("#drawingArea");
-    drawingArea.draw();
+    drawingArea.draw(Math.PI + "");
 })
