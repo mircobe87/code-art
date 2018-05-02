@@ -28,6 +28,96 @@
         );
     }
 
+    function _normDeg(n) {
+        return (n%360 + 360)%360;
+    }
+
+    function _red(h) {
+        let deg = _normDeg(h);
+        if (0 <= deg && deg < 60) {
+            return 255;
+        } else if (60 <= deg && deg < 120) {
+            return -255/60*deg + 510;
+        } else if (120 <= deg && deg < 240) {
+            return 0;
+        } else if (240 <= deg && deg < 300) {
+            return  255/60*deg - 1020;
+        } else {
+            return 255;
+        }
+    }
+
+    function _green(h) {
+        let deg = _normDeg(h);
+        if (0 <= deg && deg < 60) {
+            return 255/60*deg;
+        } else if (60 <= deg && deg < 180) {
+            return 255;
+        } else if (180 <= deg && deg < 240) {
+            return -255/60*deg + 1020;
+        } else {
+            return 0;
+        }
+    }
+
+    function _blue(h) {
+        let deg = _normDeg(h);
+        if (0 <= deg && deg < 120) {
+            return 0;
+        } else if (120 <= deg && deg < 180) {
+            return 255/60*deg - 510;
+        } else if (180 <= deg && deg < 300) {
+            return 255;
+        } else {
+            return -255/60*deg + 255*6;
+        }
+    }
+
+    function _rgbString(h) {
+        return "rgb(" + _red(h) + "," + _green(h) + "," + _blue(h) + ")";
+    }
+
+    function _getColorList(pointList) {
+        let colorList = [];
+        for (let i=0; i<360; i = i+360/pointList.length) {
+            colorList.push(_rgbString(i));
+        }
+        return colorList;
+    }
+
+    function _drawBackground(canvas) {
+        let ctx = canvas.getContext("2d");
+        ctx.save();
+        ctx.fillStyle = "black";
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.fillRect(0,0,canvas.clientWidth,canvas.clientHeight);
+        ctx.moveTo(0,0);
+        ctx.restore();
+    }
+
+    function _drawCircle(canvas, radius, pointList, colorList) {
+        let ctx = canvas.getContext("2d");
+        ctx.save();
+        ctx.transform(1, 0, 0, -1, canvas.clientWidth/2, canvas.clientHeight/2);
+        ctx.strokeStyle = "white";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(radius, 0);
+        ctx.arc(0, 0, radius, 0, 2*Math.PI, true);
+        ctx.closePath();
+        ctx.stroke();
+
+        ctx.lineWidth = 2;
+        ctx.moveTo(radius + 4, 0);
+        for (let i=0; i<pointList.length; i++) {
+            ctx.beginPath();
+            ctx.strokeStyle = colorList[i];
+            ctx.arc(0, 0, radius + 4, i*2*Math.PI/pointList.length, (i+1)*2*Math.PI/pointList.length, false);
+            ctx.stroke();
+        }
+        ctx.restore();
+    }
+
     function _getIntersectionPoint(line0, line1) {
         if (line0.verticalValue != null && line1.verticalValue != null) {
             return null;
@@ -119,16 +209,23 @@
 
         if (this._canvas != null) {
             let ctx = this._canvas.getContext('2d');
-            this._radius = Math.min(ctx.canvas.clientWidth, ctx.canvas.clientHeight)/2;
+            this._radius = Math.min(ctx.canvas.clientWidth, ctx.canvas.clientHeight)/2 - 7;
             this._pointList = _getPointList(new Point(0, 0), this._radius, 10);
-            ctx.transform(1, 0, 0, -1, ctx.canvas.clientWidth/2, ctx.canvas.clientHeight/2);
-            ctx.save();
+            this._colorList = _getColorList(this._pointList);
+            // ctx.transform(1, 0, 0, -1, ctx.canvas.clientWidth/2, ctx.canvas.clientHeight/2);
+            // ctx.save();
         }
 
         this.draw = function(theNumber) {
             let origin = new Point(0, 0);
             let ctx = this._canvas.getContext('2d');
             let movePoint = this._getPointMover(theNumber);
+
+            _drawBackground(this._canvas);
+
+            ctx.save();
+            ctx.transform(1, 0, 0, -1, ctx.canvas.clientWidth/2, ctx.canvas.clientHeight/2);
+            ctx.strokeStyle = "white";
 
             ctx.beginPath();
             let i=0;
@@ -140,8 +237,8 @@
             }
 
             // TODO
-            ctx.moveTo(this._radius, 0);
-            ctx.arc(0, 0, this._radius, 0, 2*Math.PI, true);
+            // ctx.moveTo(this._radius, 0);
+            // ctx.arc(0, 0, this._radius, 0, 2*Math.PI, true);
 
             let lastDigit = null;
             for (let digit of theNumber) {
@@ -178,6 +275,9 @@
             }
 
             ctx.stroke();
+
+            ctx.restore();
+            _drawCircle(this._canvas, this._radius, this._pointList, this._colorList);
         };
         this.clear = function() {
             // TODO
