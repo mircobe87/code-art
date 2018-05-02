@@ -5,8 +5,8 @@
         for (let i=0; i<pointAmount; i++) {
             let alpha = (i/pointAmount) * 2 * Math.PI
             points.push(new Point(
-                centerPoint.x + radius*Math.sin(alpha),
-                centerPoint.y + radius*Math.cos(alpha)
+                centerPoint.x + radius*Math.cos(alpha),
+                centerPoint.y + radius*Math.sin(alpha)
             ));
         }
         return points;
