@@ -87,22 +87,35 @@
         }
 
         this.draw = function(theNumber) {
-            // TODO
+            let origin = new Point(0, 0);
             let ctx = this._canvas.getContext('2d');
+
+            ctx.beginPath();
+            let i=0;
+            for(let p of this._pointList) {
+                ctx.moveTo(p.x+5, p.y);
+                ctx.arc(p.x, p.y, 5, 0, 2*Math.PI, true);
+                ctx.fillText(i, p.x+7, p.y);
+                i++;
+            }
+            
+            // TODO
+            ctx.moveTo(this._radius, 0);
             ctx.arc(0, 0, this._radius, 0, 2*Math.PI, true);
+            
             let lastDigit = null;
             for (let digit of theNumber) {
                 if (/[0-9]/g.test(digit)) {
                     if (lastDigit != null && lastDigit != digit) {
                         let p0 = this._pointList[parseInt(lastDigit)];
                         r0 = _getLineByPoints(
-                            new Point(0,0),
+                            origin,
                             p0
                         );
 
                         let p1 = this._pointList[parseInt(digit)];
                         r1 = _getLineByPoints(
-                            new Point(0,0),
+                            origin,
                             p1
                         );
                         
@@ -110,9 +123,9 @@
                             r0.perpendicularLineAt(p0),
                             r1.perpendicularLineAt(p1)
                         );
-                        let arcRadius = p.distanceTo(new Point(0,0));
+                        let arcRadius = p.distanceTo(p0);
                         try {
-                            ctx.arc(p0.x, p0.y, p1.x, p1.y, arcRadius);
+                            ctx.arcTo(origin.x, origin.y, p1.x, p1.y, arcRadius);
                         } catch (err) {
                             console.log(err.message, arcRadius);
                         }
@@ -123,6 +136,7 @@
                     lastDigit = digit;
                 }
             }
+            
             ctx.stroke();
         };
         this.clear = function() {
