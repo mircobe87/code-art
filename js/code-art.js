@@ -82,10 +82,7 @@
             let ctx = this._canvas.getContext('2d');
             this._radius = Math.min(ctx.canvas.clientWidth, ctx.canvas.clientHeight)/2;
             this._pointList = _getPointList(new Point(0, 0), this._radius, 10);
-            ctx.translate(
-                ctx.canvas.clientWidth/2,
-                ctx.canvas.clientHeight/2
-            );
+            ctx.transform(1, 0, 0, -1, ctx.canvas.clientWidth/2, ctx.canvas.clientHeight/2);
             ctx.save();
         }
 
