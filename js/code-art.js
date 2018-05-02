@@ -138,11 +138,11 @@
                 ctx.fillText(i, p.x+7, p.y);
                 i++;
             }
-            
+
             // TODO
             ctx.moveTo(this._radius, 0);
             ctx.arc(0, 0, this._radius, 0, 2*Math.PI, true);
-            
+
             let lastDigit = null;
             for (let digit of theNumber) {
                 if (/[0-9]/g.test(digit)) {
@@ -150,7 +150,7 @@
                         let p0 = this._pointList[parseInt(lastDigit)];
                         let p1 = this._pointList[parseInt(digit)];
 
-                        if (Math.abs(parseInt(lastDigit) - parseInt(digit) == 5)) {
+                        if (Math.abs(parseInt(lastDigit) - parseInt(digit)) == 5) {
                             ctx.lineTo(p1.x, p1.y);
                         } else {
                             r0 = _getLineByPoints(
@@ -176,13 +176,17 @@
                     lastDigit = digit;
                 }
             }
-            
+
             ctx.stroke();
         };
         this.clear = function() {
             // TODO
         };
 
+        /*
+         * Restituisce una funzione usara per spostare avanti sulla circonferenza
+         * il pinto da cui partire per tracciare il prossimo arco.
+         */
         this._getPointMover = function(theNumber) {
             let counters = {};
             for (let digit of theNumber) {
@@ -194,8 +198,8 @@
             Object.keys(counters).forEach(function(d){
                 max = counters[d] > max ? counters[d] : max;
             });
-            
-            let step = 2 * Math.PI / (10 * (max*1.5));
+
+            let step = 2 * Math.PI / (10 * (max*1)); // definisce l'ampiezza dello spostamento
 
             return function(pointIndex) {
                 let srcPoint = this._pointList[parseInt(pointIndex)];
