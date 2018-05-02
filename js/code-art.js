@@ -29,6 +29,21 @@
     }
 
     function _getIntersectionPoint(line0, line1) {
+        if (line0.verticalValue != null && line1.verticalValue != null) {
+            return null;
+        } else if (line0.m == 0 && line1.m == 0) {
+            return null;
+        } else if (line0.verticalValue != null) {
+            return new Point(
+                line0.verticalValue,
+                line1.m * line0.verticalValue + line1.q
+            );
+        } else if (line1.verticalValue != null) {
+            return new Point(
+                line1.verticalValue,
+                line0.m * line1.verticalValue + line0.q
+            );
+        }
         return new Point(
             (line1.q - line0.q) / (line0.m - line1.m),
             (line0.m * line1.q - line1.m * line0.q) / (line0.m - line1.m)
@@ -51,14 +66,38 @@
     function Line(m, q) {
         this.m = m;
         this.q = q;
+        this.verticalValue = null;
 
         this.toString = function() {
             return "y = " + this.m + "x + " + this.q;
         };
 
         this.perpendicularLineAt = function(point) {
-            let line = _getPerpendicularLineOnPoint(this, point);
-            return new Line(line.m, line.q);
+            let line;
+            if (this.isVertical()) {
+                return new Line(0, point.y);
+            } else if (this.isHorizontal()) {
+                let line = new Line(Infinity, Infinity);
+                line.makeVertical(point.x);
+                return line;
+            } else {
+                let line = _getPerpendicularLineOnPoint(this, point);
+                return new Line(line.m, line.q);
+            }
+        };
+
+        this.isVertical = function() {
+            return this.verticalValue != null;
+        };
+
+        this.isHorizontal = function() {
+            return this.m == 0;
+        };
+
+        this.makeVertical = function(value) {
+            this.m = Infinity;
+            this.q = Infinity;
+            this.verticalValue = value;
         };
     }
 
@@ -89,6 +128,7 @@
         this.draw = function(theNumber) {
             let origin = new Point(0, 0);
             let ctx = this._canvas.getContext('2d');
+            let movePoint = this._getPointMover(theNumber);
 
             ctx.beginPath();
             let i=0;
@@ -108,27 +148,27 @@
                 if (/[0-9]/g.test(digit)) {
                     if (lastDigit != null && lastDigit != digit) {
                         let p0 = this._pointList[parseInt(lastDigit)];
-                        r0 = _getLineByPoints(
-                            origin,
-                            p0
-                        );
-
                         let p1 = this._pointList[parseInt(digit)];
-                        r1 = _getLineByPoints(
-                            origin,
-                            p1
-                        );
-                        
-                        let p = _getIntersectionPoint(
-                            r0.perpendicularLineAt(p0),
-                            r1.perpendicularLineAt(p1)
-                        );
-                        let arcRadius = p.distanceTo(p0);
-                        try {
+
+                        if (Math.abs(parseInt(lastDigit) - parseInt(digit) == 5)) {
+                            ctx.lineTo(p1.x, p1.y);
+                        } else {
+                            r0 = _getLineByPoints(
+                                origin,
+                                p0
+                            );
+                            r1 = _getLineByPoints(
+                                origin,
+                                p1
+                            );
+                            let p = _getIntersectionPoint(
+                                r0.perpendicularLineAt(p0),
+                                r1.perpendicularLineAt(p1)
+                            );
+                            let arcRadius = p.distanceTo(p0);
                             ctx.arcTo(origin.x, origin.y, p1.x, p1.y, arcRadius);
-                        } catch (err) {
-                            console.log(err.message, arcRadius);
                         }
+                        this._pointList[parseInt(lastDigit)] = movePoint(lastDigit);
                     } else {
                         let firstPoint = this._pointList[parseInt(digit)];
                         ctx.moveTo(firstPoint.x, firstPoint.y);
@@ -142,6 +182,29 @@
         this.clear = function() {
             // TODO
         };
+
+        this._getPointMover = function(theNumber) {
+            let counters = {};
+            for (let digit of theNumber) {
+                if (/[0-9]/g.test(digit)) {
+                    counters[digit] = counters[digit] == undefined ? 1 : counters[digit] + 1;
+                }
+            }
+            let max = 0;
+            Object.keys(counters).forEach(function(d){
+                max = counters[d] > max ? counters[d] : max;
+            });
+            
+            let step = 2 * Math.PI / (10 * (max*1.5));
+
+            return function(pointIndex) {
+                let srcPoint = this._pointList[parseInt(pointIndex)];
+                return new Point(
+                    Math.cos(step)*srcPoint.x - Math.sin(step)*srcPoint.y,
+                    Math.sin(step)*srcPoint.x + Math.cos(step)*srcPoint.y,
+                );
+            }.bind(this);
+        }
     }
 
     var CODE_ART = {
