@@ -82,12 +82,25 @@
         return "rgb(" + _red(h) + "," + _green(h) + "," + _blue(h) + ")";
     }
 
+    function _colorLuminance(h) {
+        console.log(h, 0.299*_red(h) + 0.587*_green(h) + 0.114*_blue(h));
+        return 0.299*_red(h) + 0.587*_green(h) + 0.114*_blue(h);
+    }
+
     function _getColorList(pointList) {
         let colorList = [];
         for (let i=0; i<360; i = i+360/pointList.length) {
             colorList.push(_rgbString(i));
         }
         return colorList;
+    }
+
+    function _getLabelColorList(pointList) {
+        let colors = [];
+        for (let i=0; i<360; i = i+360/pointList.length) {
+            colors.push(_colorLuminance(i) >= 128 ? "black" : "white");
+        }
+        return colors;
     }
 
     function _drawBackground(canvas) {
@@ -125,14 +138,14 @@
         ctx.restore();
     }
 
-    function _drawLabels(canvas, labelPositionList) {
+    function _drawLabels(canvas, labelPositionList, labelColorList) {
         let xOffset = canvas.clientWidth/2;
         let yOffset = canvas.clientHeight/2;
         let ctx = canvas.getContext("2d");
         for(let label=0; label<labelPositionList.length; label++) {
             ctx.save();
-            ctx.fillStyle = "black";
-            ctx.font = '14px monospace';
+            ctx.fillStyle = labelColorList[label];
+            ctx.font = '13px monospace';
             ctx.textBaseline = 'middle';
             ctx.textAlign = 'center';
             ctx.translate(xOffset + labelPositionList[label].x, yOffset - labelPositionList[label].y);
@@ -248,6 +261,7 @@
             this._pointList = _getPointList(new Point(0, 0), this._radius, 10);
             this._colorList = _getColorList(this._pointList);
             this._labelPositionList = _getLabelPositionList(new Point(0, 0), this._radius, 10);
+            this._labelColorList = _getLabelColorList(this._pointList);
         }
 
         this.draw = function(theNumber) {
@@ -302,7 +316,7 @@
 
             ctx.restore();
             _drawCircle(this._canvas, this._radius, this._pointList, this._colorList);
-            _drawLabels(this._canvas, this._labelPositionList);
+            _drawLabels(this._canvas, this._labelPositionList, this._labelColorList);
         };
         this.clear = function() {
             // TODO
