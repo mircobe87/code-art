@@ -4,6 +4,7 @@
     let LABEL_OFFSET = 8;
     let RING_OFFSET = 8;
     let RING_SIZE = 12;
+    let LINE_SIZE = 1.33;
 
     function _getPointList(centerPoint, radius, pointAmount) {
         let points = [];
@@ -83,7 +84,6 @@
     }
 
     function _colorLuminance(h) {
-        console.log(h, 0.299*_red(h) + 0.587*_green(h) + 0.114*_blue(h));
         return 0.299*_red(h) + 0.587*_green(h) + 0.114*_blue(h);
     }
 
@@ -103,13 +103,14 @@
         return colors;
     }
 
-    function _drawBackground(canvas) {
+    function _drawBackground(canvas, radius) {
         let ctx = canvas.getContext("2d");
         ctx.save();
-        ctx.fillStyle = "black";
-        ctx.setTransform(1, 0, 0, 1, 0, 0);
-        ctx.fillRect(0,0,canvas.clientWidth,canvas.clientHeight);
-        ctx.moveTo(0,0);
+        ctx.transform(1, 0, 0, -1, canvas.clientWidth/2, canvas.clientHeight/2);
+        ctx.fillStyle = 'black';
+        ctx.beginPath();
+        ctx.arc(0, 0, radius + RING_SIZE, 0, 2*Math.PI, true);
+        ctx.fill();
         ctx.restore();
     }
 
@@ -152,6 +153,45 @@
             ctx.fillText(label, 0, 0);
             ctx.restore();
         }
+    }
+
+    function _drawArc(canvas, pointList, origin, radius, lastDigit, digit, colorList) {
+        let ctx = canvas.getContext("2d");
+        let p0 = pointList[parseInt(lastDigit)];
+        let p1 = pointList[parseInt(digit)];
+
+        ctx.save();
+        ctx.transform(1, 0, 0, -1, ctx.canvas.clientWidth/2, ctx.canvas.clientHeight/2);
+        ctx.beginPath();
+        ctx.moveTo(p0.x, p0.y);
+
+        let lineargradient = ctx.createLinearGradient(p0.x, p0.y, p1.x, p1.y);
+        lineargradient.addColorStop(0, colorList[parseInt(lastDigit)]);
+        lineargradient.addColorStop(1, colorList[parseInt(digit)]);
+        ctx.strokeStyle = lineargradient;
+        ctx.lineWidth = LINE_SIZE;
+
+        if ( p0.distanceTo(p1).toFixed(5) == (2*radius).toFixed(5) ) {
+            ctx.lineTo(p1.x, p1.y);
+        } else {
+            r0 = _getLineByPoints(
+                origin,
+                p0
+            );
+            r1 = _getLineByPoints(
+                origin,
+                p1
+            );
+            let p = _getIntersectionPoint(
+                r0.perpendicularLineAt(p0),
+                r1.perpendicularLineAt(p1)
+            );
+            let arcRadius = p.distanceTo(p0);
+            ctx.arcTo(origin.x, origin.y, p1.x, p1.y, arcRadius);
+        }
+
+        ctx.stroke();
+        ctx.restore();
     }
 
     function _getLabelPositionList(centerPoint, radius, pointAmount) {
@@ -269,52 +309,19 @@
             let ctx = this._canvas.getContext('2d');
             let movePoint = this._getPointMover(theNumber);
 
-            _drawBackground(this._canvas);
-
-            ctx.save();
-            ctx.transform(1, 0, 0, -1, ctx.canvas.clientWidth/2, ctx.canvas.clientHeight/2);
-
-            
-            ctx.strokeStyle = "white";
-            ctx.beginPath();
+            _drawBackground(this._canvas, this._radius);
 
             let lastDigit = null;
             for (let digit of theNumber) {
                 if (/[0-9]/g.test(digit)) {
                     if (lastDigit != null && lastDigit != digit) {
-                        let p0 = this._pointList[parseInt(lastDigit)];
-                        let p1 = this._pointList[parseInt(digit)];
-
-                        if (Math.abs(parseInt(lastDigit) - parseInt(digit)) == 5) {
-                            ctx.lineTo(p1.x, p1.y);
-                        } else {
-                            r0 = _getLineByPoints(
-                                origin,
-                                p0
-                            );
-                            r1 = _getLineByPoints(
-                                origin,
-                                p1
-                            );
-                            let p = _getIntersectionPoint(
-                                r0.perpendicularLineAt(p0),
-                                r1.perpendicularLineAt(p1)
-                            );
-                            let arcRadius = p.distanceTo(p0);
-                            ctx.arcTo(origin.x, origin.y, p1.x, p1.y, arcRadius);
-                        }
+                        _drawArc(this._canvas, this._pointList, origin, this._radius, lastDigit, digit, this._colorList);
                         this._pointList[parseInt(lastDigit)] = movePoint(lastDigit);
-                    } else {
-                        let firstPoint = this._pointList[parseInt(digit)];
-                        ctx.moveTo(firstPoint.x, firstPoint.y);
                     }
                     lastDigit = digit;
                 }
             }
 
-            ctx.stroke();
-
-            ctx.restore();
             _drawCircle(this._canvas, this._radius, this._pointList, this._colorList);
             _drawLabels(this._canvas, this._labelPositionList, this._labelColorList);
         };
