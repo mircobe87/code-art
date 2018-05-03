@@ -1,5 +1,10 @@
 (function(){
 
+    let PADDING = 17;
+    let LABEL_OFFSET = 8;
+    let RING_OFFSET = 8;
+    let RING_SIZE = 12;
+
     function _getPointList(centerPoint, radius, pointAmount) {
         let points = [];
         for (let i=0; i<pointAmount; i++) {
@@ -98,24 +103,54 @@
     function _drawCircle(canvas, radius, pointList, colorList) {
         let ctx = canvas.getContext("2d");
         ctx.save();
+
         ctx.transform(1, 0, 0, -1, canvas.clientWidth/2, canvas.clientHeight/2);
         ctx.strokeStyle = "white";
-        ctx.lineWidth = 1;
+        ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.moveTo(radius, 0);
         ctx.arc(0, 0, radius, 0, 2*Math.PI, true);
         ctx.closePath();
         ctx.stroke();
 
-        ctx.lineWidth = 2;
-        ctx.moveTo(radius + 4, 0);
+        ctx.lineWidth = RING_SIZE;
+        ctx.moveTo(radius + RING_OFFSET, 0);
         for (let i=0; i<pointList.length; i++) {
             ctx.beginPath();
             ctx.strokeStyle = colorList[i];
-            ctx.arc(0, 0, radius + 4, i*2*Math.PI/pointList.length, (i+1)*2*Math.PI/pointList.length, false);
+            ctx.arc(0, 0, radius + RING_OFFSET, i*2*Math.PI/pointList.length, (i+1)*2*Math.PI/pointList.length, false);
             ctx.stroke();
         }
+
         ctx.restore();
+    }
+
+    function _drawLabels(canvas, labelPositionList) {
+        let xOffset = canvas.clientWidth/2;
+        let yOffset = canvas.clientHeight/2;
+        let ctx = canvas.getContext("2d");
+        for(let label=0; label<labelPositionList.length; label++) {
+            ctx.save();
+            ctx.fillStyle = "black";
+            ctx.font = '14px monospace';
+            ctx.textBaseline = 'middle';
+            ctx.textAlign = 'center';
+            ctx.translate(xOffset + labelPositionList[label].x, yOffset - labelPositionList[label].y);
+            ctx.fillText(label, 0, 0);
+            ctx.restore();
+        }
+    }
+
+    function _getLabelPositionList(centerPoint, radius, pointAmount) {
+        let labelPositionList = [];
+        for (let i=0; i<pointAmount; i++) {
+            let alpha = (2 * Math.PI/pointAmount) * (1/2 + i);
+            labelPositionList.push(new Point(
+                centerPoint.x + (radius + LABEL_OFFSET)*Math.cos(alpha),
+                centerPoint.y + (radius + LABEL_OFFSET)*Math.sin(alpha)
+            ));
+        }
+        return labelPositionList;
     }
 
     function _getIntersectionPoint(line0, line1) {
@@ -209,11 +244,10 @@
 
         if (this._canvas != null) {
             let ctx = this._canvas.getContext('2d');
-            this._radius = Math.min(ctx.canvas.clientWidth, ctx.canvas.clientHeight)/2 - 7;
+            this._radius = Math.min(ctx.canvas.clientWidth, ctx.canvas.clientHeight)/2 - PADDING;
             this._pointList = _getPointList(new Point(0, 0), this._radius, 10);
             this._colorList = _getColorList(this._pointList);
-            // ctx.transform(1, 0, 0, -1, ctx.canvas.clientWidth/2, ctx.canvas.clientHeight/2);
-            // ctx.save();
+            this._labelPositionList = _getLabelPositionList(new Point(0, 0), this._radius, 10);
         }
 
         this.draw = function(theNumber) {
@@ -225,20 +259,10 @@
 
             ctx.save();
             ctx.transform(1, 0, 0, -1, ctx.canvas.clientWidth/2, ctx.canvas.clientHeight/2);
+
+            
             ctx.strokeStyle = "white";
-
             ctx.beginPath();
-            let i=0;
-            for(let p of this._pointList) {
-                ctx.moveTo(p.x+5, p.y);
-                ctx.arc(p.x, p.y, 5, 0, 2*Math.PI, true);
-                ctx.fillText(i, p.x+7, p.y);
-                i++;
-            }
-
-            // TODO
-            // ctx.moveTo(this._radius, 0);
-            // ctx.arc(0, 0, this._radius, 0, 2*Math.PI, true);
 
             let lastDigit = null;
             for (let digit of theNumber) {
@@ -278,6 +302,7 @@
 
             ctx.restore();
             _drawCircle(this._canvas, this._radius, this._pointList, this._colorList);
+            _drawLabels(this._canvas, this._labelPositionList);
         };
         this.clear = function() {
             // TODO
