@@ -155,10 +155,10 @@
         }
     }
 
-    function _drawArc(canvas, pointList, origin, radius, lastDigit, digit, colorList) {
+    function _drawArc(canvas, pointList, origin, radius, lastDigit, digit, colorList, pointMover) {
         let ctx = canvas.getContext("2d");
         let p0 = pointList[parseInt(lastDigit)];
-        let p1 = pointList[parseInt(digit)];
+        let p1 = lastDigit == digit ? pointMover(parseInt(digit)) : pointList[parseInt(digit)];
 
         ctx.save();
         ctx.transform(1, 0, 0, -1, ctx.canvas.clientWidth/2, ctx.canvas.clientHeight/2);
@@ -314,8 +314,8 @@
             let lastDigit = null;
             for (let digit of theNumber) {
                 if (/[0-9]/g.test(digit)) {
-                    if (lastDigit != null && lastDigit != digit) {
-                        _drawArc(this._canvas, this._pointList, origin, this._radius, lastDigit, digit, this._colorList);
+                    if (lastDigit != null) {
+                        _drawArc(this._canvas, this._pointList, origin, this._radius, lastDigit, digit, this._colorList, movePoint);
                         this._pointList[parseInt(lastDigit)] = movePoint(lastDigit);
                     }
                     lastDigit = digit;
